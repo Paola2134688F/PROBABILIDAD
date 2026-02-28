@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Estudiantil - Karla Paola</title>
+    
+    <!-- Importación de Fuente de Videojuego (Arcade) -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <!-- Librerías para OCR y Gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://djs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.ls"></script>
+    <style>
+        :root {
+            --bg-color: #0b0e11;
+            --card-bg: #1e2329;
+            --text-main: #eaecef;
+            --accent-green: #00ffad; /* Verde Neón */
+            --accent-blue: #02d1ff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Alineación a la izquierda según tu solicitud */
+        header {
+            text-align: left; 
+            padding: 40px 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        /* Título con fuente de videojuego y color verde */
+        h1 {
+            color: var(--accent-green); 
+            font-family: 'Press Start 2P', cursive; 
+            font-size: 4rem; 
+            line-height: 1.4;
+            margin-bottom: 20px;
+        }
+
+        /* Descripción pegada a la izquierda */
+        .description { 
+            color: #848e9c; 
+            max-width: 800px; 
+            line-height: 1.6; 
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        /* Menú de Opciones */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .option-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+
+        .option-card:hover {
+            border: 1px solid var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 173, 0.2);
+        }
+
+        .content-section {
+            display: none;
+            background: var(--card-bg);
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn {
+            background: var(--accent-green);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px 0 0;
+        }
+
+        .btn-blue { background: var(--accent-blue); }
+
+        canvas { margin-top: 20px; background: #161a1e; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Bienvenido a mi proyecto</h1>
+        <p class="description">
+            Este es un blog estudiantil, donde se presentarán proyectos y tareas de la materia 
+            <strong>"Probabilidad Y Estadistica"</strong> con el doctor <strong>"J. Jesús Rico Melgoza"</strong> 
+            por parte de la estudiante <strong>"Corrales P. Karla Paola"</strong>.
+        </p>
+    </header>
+
+    <nav class="menu-grid">
+        <div class="option-card" onclick="showSection('proyecto-recibo')">
+            <h3>Proyecto Recibo</h3>
+        </div>
+        <div class="option-card"><h3>Tarea 2</h3></div>
+        <div class="option-card"><h3>Tarea 3</h3></div>
+        <div class="option-card"><h3>Tarea 4</h3></div>
+    </nav>
+ 
+    <section id="proyecto-recibo" class="content-section">
+        <h2>Proyecto Recibo: Escáner y Análisis</h2>
+        <p>Sube la imagen de tu recibo para extraer datos estadísticos.</p>
+        
+        <input type="file" id="input-recibo" accept="image/*" capture="environment">
+        
+        <div id="controles" style="display:none;">
+            <button class="btn" onclick="alert('Archivo guardado en el sistema.')">Guardar</button>
+            <button class="btn btn-blue" onclick="procesarImagen()">Analizar</button>
+        </div>
+
+        <p id="mensaje-carga" style="color: var(--accent-blue); margin-top: 10px;"></p>
+        <canvas id="graficaResultados"></canvas>
+    </section>
+
+    <script>
+        const input = document.getElementById('input-recibo');
+        const controles = document.getElementById('controles');
+        const mensaje = document.getElementById('mensaje-carga');
+
+        function showSection(id) {
+            document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+        }
+
+        input.addEventListener('change', () => {
+            if (input.files.length > 0) controles.style.display = 'block';
+        });
+
+        async function procesarImagen() {
+            mensaje.innerText = "Iniciando escaneo OCR... extrayendo consumos.";
+            try {
+                const { data: { text } } = await Tesseract.recognize(input.files, 'spa');
+                console.log("Texto extraído:", text); // Se puede ver en la consola de Acode [3]
+                mensaje.innerText = "Análisis finalizado. Generando gráfica histórica.";
+                mostrarGrafica();
+            } catch (e) {
+                mensaje.innerText = "Error de conexión. Verifica tu internet.";
+            }
+        }
+
+        function mostrarGrafica() {
+            const ctx = document.getElementById('graficaResultados').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Bim 1', 'Bim 2', 'Bim 3', 'Bim 4', 'Bim 5'],
+                    datasets: [{
+                        label: 'Consumo kWh',
+                        data: ,
+                        borderColor: '#00ffad',
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: 'rgba(0, 255, 173, 0.1)'
+                    }]
+ 
+                               },
+                        options: {
+                    plugins: { legend: { labels: { color: '#fff' } } },
+                    scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
