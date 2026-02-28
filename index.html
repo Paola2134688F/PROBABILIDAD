@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Estudiantil - Karla Paola</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        /* ══════════════════════════════════════════════════════
+           VARIABLES Y BASE
+        ══════════════════════════════════════════════════════ */
+        :root {
+            --bg:        #0b0e11;
+            --card:      #1e2329;
+            --card2:     #13161a;
+            --border:    #2b3139;
+            --text:      #eaecef;
+            --muted:     #848e9c;
+            --green:     #00ffad;
+            --blue:      #02d1ff;
+            --green-dim: rgba(0,255,173,.12);
+            --blue-dim:  rgba(2,209,255,.12);
+            --red-neon:  #ff4d6d;
+            --red-dim:   rgba(255,77,109,.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════════════════════════════════
+           HEADER
+        ══════════════════════════════════════════════════════ */
+        header {
+            padding: 40px 10px 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 28px;
+        }
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(1.4rem, 4vw, 3rem);
+            color: var(--green);
+            line-height: 1.5;
+            text-shadow: 0 0 20px rgba(0,255,173,.4);
+            margin-bottom: 16px;
+        }
+        .description { color: var(--muted); max-width: 800px; line-height: 1.7; font-size: .95rem; }
+        .description strong { color: var(--text); }
+
+        /* ══════════════════════════════════════════════════════
+           MENÚ
+        ══════════════════════════════════════════════════════ */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .option-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: .25s;
+        }
+        .option-card h3 { font-size: .85rem; color: var(--muted); transition: .25s; }
+        .option-card:hover { border-color: var(--green); box-shadow: 0 0 14px var(--green-dim); }
+        .option-card:hover h3 { color: var(--green); }
+        .option-card.active { border-color: var(--green); background: var(--green-dim); }
+        .option-card.active h3 { color: var(--green); }
+
+        /* ══════════════════════════════════════════════════════
+           SECCIONES DE CONTENIDO
+        ══════════════════════════════════════════════════════ */
+        .content-section { display: none; animation: fadeIn .4s; }
+        .content-section.visible { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ══════════════════════════════════════════════════════
+           SECCIÓN PROYECTO RECIBO
+        ══════════════════════════════════════════════════════ */
+        .recibo-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .recibo-header h2 {
+            font-size: 1.1rem;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .recibo-header h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px; height: 22px;
+            background: var(--green);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--green);
+        }
+        .recibo-header p { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+
+        /* Botones lanzadores */
+        .btn-launcher {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: .8rem;
+            cursor: pointer;
+            border: none;
+            transition: .2s;
+            letter-spacing: .3px;
+        }
+        .btn-green {
+            background: var(--green);
+            color: #000;
+            box-shadow: 0 0 14px rgba(0,255,173,.3);
+        }
+        .btn-green:hover { box-shadow: 0 0 24px rgba(0,255,173,.55); transform: translateY(-1px); }
+        .btn-blue-l {
+            background: var(--blue);
+            color: #000;
+            box-shadow: 0 0 14px rgba(2,209,255,.3);
+        }
+        .btn-blue-l:hover { box-shadow: 0 0 24px rgba(2,209,255,.55); transform: translateY(-1px); }
+
+        /* ══════════════════════════════════════════════════════
+           MODALES (overlay)
+        ══════════════════════════════════════════════════════ */
+        .k-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.75);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .k-modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 660px;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 0 60px rgba(0,255,173,.08), 0 20px 60px rgba(0,0,0,.6);
+        }
+        .k-modal-wide { max-width: 860px; }
+
+        /* Scrollbar del modal */
+        .k-modal::-webkit-scrollbar { width: 5px; }
+        .k-modal::-webkit-scrollbar-track { background: var(--card2); }
+        .k-modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Cabecera modal */
+        .k-modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .k-modal-head h3 { color: var(--green); font-size: 1rem; font-weight: 700; }
+        .k-modal-head p  { color: var(--muted); font-size: .75rem; margin-top: 3px; }
+        .k-close {
+            background: none; border: none; cursor: pointer;
+            color: var(--muted); font-size: 1.3rem; line-height: 1;
+            transition: color .2s; padding: 2px 6px;
+        }
+        .k-close:hover { color: var(--green); }
+
+        /* ── Drop zone ── */
+        .k-dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: .25s;
+            background: var(--card2);
+        }
+        .k-dropzone:hover, .k-dropzone.over {
+            border-color: var(--green);
+            box-shadow: 0 0 20px var(--green-dim);
+        }
+        .k-dropzone.multi-zone:hover, .k-dropzone.multi-zone.over {
+            border-color: var(--blue);
+            box-shadow: 0 0 20px var(--blue-dim);
+        }
+        .k-dropzone input { display: none; }
+        .k-dropzone .dz-icon { font-size: 2.2rem; margin-bottom: 10px; }
+        .k-dropzone .dz-title { font-weight: 700; color: var(--green); font-size: .9rem; }
+        .k-dropzone.multi-zone .dz-title { color: var(--blue); }
+        .k-dropzone .dz-sub   { color: var(--muted); font-size: .72rem; margin-top: 5px; }
+
+        /* ── Chips archivo ── */
+        .k-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: rgba(0,255,173,.1); border: 1px solid rgba(0,255,173,.25);
+            color: var(--green); padding: 3px 10px; border-radius: 999px;
+            font-size: .7rem; font-weight: 700; margin: 3px;
+        }
+        .k-chip button { background: none; border: none; cursor: pointer; color: var(--green); font-size: .9rem; line-height: 1; }
+
+        /* ── Progreso ── */
+        .k-spinner {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 3px solid var(--border); border-top-color: var(--green);
+            animation: girar .7s linear infinite; margin: 0 auto;
+        }
+        .k-spinner.blue { border-top-color: var(--blue); }
+        @keyframes girar { to { transform: rotate(360deg); } }
+        .k-bar-bg { background: var(--border); border-radius: 999px; height: 5px; overflow: hidden; }
+        .k-bar-fill { height: 100%; border-radius: 999px; transition: width .3s; background: linear-gradient(90deg, var(--green), var(--blue)); }
+
+        /* ── Botones generales del modal ── */
+        .k-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 18px; border-radius: 8px; font-size: .8rem; font-weight: 700;
+            cursor: pointer; border: none; transition: .2s;
+        }
+        .k-btn-green { background: var(--green); color: #000; }
+        .k-btn-green:hover { box-shadow: 0 0 16px rgba(0,255,173,.5); }
+        .k-btn-green:disabled { opacity: .35; cursor: not-allowed; }
+        .k-btn-blue  { background: var(--blue);  color: #000; }
+        .k-btn-blue:hover  { box-shadow: 0 0 16px rgba(2,209,255,.5); }
+        .k-btn-ghost { background: var(--border); color: var(--muted); }
+        .k-btn-ghost:hover { color: var(--text); }
+
+        /* ── Error box ── */
+        .k-error {
+            background: var(--red-dim); border: 1px solid rgba(255,77,109,.3);
+            border-radius: 8px; padding: 8px 12px;
+            font-size: .72rem; color: var(--red-neon);
+            margin-top: 10px; font-weight: 600;
+        }
+
+        /* ── Tabs ── */
+        .k-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .k-tab {
+            padding: 6px 14px; border-radius: 999px; font-size: .72rem;
+            font-weight: 700; cursor: pointer; border: 1px solid var(--border);
+            background: var(--card2); color: var(--muted); transition: .2s;
+        }
+        .k-tab.active { background: var(--green); color: #000; border-color: var(--green); box-shadow: 0 0 10px var(--green-dim); }
+        .k-tab.blue-tab.active { background: var(--blue); color: #000; border-color: var(--blue); box-shadow: 0 0 10px var(--blue-dim); }
+
+        /* ── Cards resultado simple ── */
+        .k-grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+        @media(max-width:520px) { .k-grid3 { grid-template-columns: 1fr; } }
+        .k-card {
+            background: var(--card2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px;
+        }
+        .k-card-green { border-color: rgba(0,255,173,.3); background: var(--green-dim); }
+        .k-card-blue  { border-color: rgba(2,209,255,.3); background: var(--blue-dim); }
+        .k-card-red   { border-color: rgba(255,77,109,.3); background: var(--red-dim); }
+        .k-label { font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 4px; }
+        .k-label.green { color: var(--green); }
+        .k-label.blue  { color: var(--blue); }
+        .k-label.red   { color: var(--red-neon); }
+        .k-val  { font-size: 1.4rem; font-weight: 900; color: var(--text); }
+        .k-val.green { color: var(--green); }
+        .k-val.blue  { color: var(--blue); }
+        .k-val.red   { color: var(--red-neon); }
+        .k-sub  { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+
+        /* ── Cards resultado simple — desglose ── */
+        .k-row { display: flex; justify-content: space-between; font-size: .7rem; padding: 4px 0; border-bottom: 1px solid var(--border); }
+        .k-row:last-child { border: none; }
+        .k-row span:first-child { color: var(--muted); }
+        .k-row span:last-child  { font-weight: 700; color: var(--text); }
+
+        /* ── Historial ── */
+        .k-hist-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .72rem;
+        }
+        .k-hist-row:last-child { border: none; }
+        .k-hist-row .periodo { color: var(--muted); }
+        .k-hist-row .kwh     { color: var(--green); font-weight: 800; }
+        .k-hist-row .monto   { color: var(--text);  font-weight: 700; }
+
+        /* ── Texto crudo ── */
+        .k-raw {
+            background: var(--card2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px; font-family: monospace;
+            font-size: .65rem; color: var(--muted); max-height: 160px;
+            overflow-y: auto; white-space: pre-wrap; word-break: break-all; line-height: 1.7;
+        }
+
+        /* ── Badge ── */
+        .k-badge { font-size: .6rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
+        .k-badge-green { background: rgba(0,255,173,.15); color: var(--green); border: 1px solid rgba(0,255,173,.3); }
+
+        /* ── Barra izquierda coloreada ── */
+        .k-bl-green { border-left: 3px solid var(--green); padding-left: 10px; }
+        .k-bl-blue  { border-left: 3px solid var(--blue);  padding-left: 10px; }
+
+        /* ══════════════════════════════════════════════════════
+           MODAL MÚLTIPLE — cola de archivos
+        ══════════════════════════════════════════════════════ */
+        .m-fila {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--card2); border-radius: 10px; padding: 8px 10px;
+            border-left: 4px solid var(--blue); margin-bottom: 5px;
+        }
+        .m-num {
+            width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .6rem; font-weight: 900; color: #000; flex-shrink: 0;
+        }
+        .m-num-sm {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; border-radius: 50%;
+            font-size: .58rem; font-weight: 900; color: #000; flex-shrink: 0;
+        }
+        .m-estado { font-size: .58rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+        .m-est-p  { background: rgba(0,255,173,.1);   color: var(--green); }
+        .m-est-r  { background: rgba(2,209,255,.1);   color: var(--blue);  }
+        .m-est-ok { background: rgba(0,255,173,.15);  color: var(--green); }
+        .m-est-e  { background: var(--red-dim);       color: var(--red-neon); }
+
+        /* ── Tabla múltiple ── */
+        .k-table { width: 100%; border-collapse: collapse; }
+        .k-table th { font-size: .62rem; font-weight: 800; text-transform: uppercase; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+        .k-table td { padding: 7px 8px; font-size: .72rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .k-table tr:last-child td { border: none; }
+        .k-table tr:hover td { background: rgba(255,255,255,.02); }
+
+        /* ── Stat cards múltiple ── */
+        .k-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 18px; }
+        @media(max-width:560px) { .k-stats { grid-template-columns: repeat(2,1fr); } }
+
+        /* ── Tarifa badges tabla ── */
+        .tb-basica { background: rgba(0,255,173,.12); color: var(--green); font-size: .58rem; padding: 2px 7px; border-radius: 999px; font-weight: 700; white-space:nowrap; }
+        .tb-alta   { background: rgba(2,209,255,.12);   color: var(--blue);     font-size: .58rem; padding: 2px 7px; border-radius: 999px; font-weight: 700; white-space:nowrap; }
+        .tb-dac    { background: var(--red-dim); color: var(--red-neon); font-size: .58rem; padding: 2px 7px; border-radius: 999px; font-weight: 700; white-space:nowrap; }
+        .tb-desc   { background: var(--border); color: var(--muted); font-size: .58rem; padding: 2px 7px; border-radius: 999px; font-weight: 700; white-space:nowrap; }
+
+        /* ── Charts ── */
+        .k-chart-wrap { position: relative; height: 250px; width: 100%; margin-top: 10px; }
+        .k-chart-wrap canvas { background: transparent !important; }
+
+        /* ── Hidden helper ── */
+        .hidden { display: none !important; }
+
+        /* ══════════════════════════════════════════════════════
+           OTRAS SECCIONES (placeholder)
+        ══════════════════════════════════════════════════════ */
+        .placeholder-card {
+            background: var(--card); border: 1px dashed var(--border);
+            border-radius: 12px; padding: 40px; text-align: center; color: var(--muted);
+            font-size: .85rem;
+        }
+        .placeholder-card .ph-icon { font-size: 2rem; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header>
+    <h1>Bienvenido a mi<br>proyecto</h1>
+    <p class="description">
+        Este es un blog estudiantil, donde se presentarán proyectos y tareas de la materia
+        <strong>"Probabilidad Y Estadística"</strong> con el doctor <strong>"J. Jesús Rico Melgoza"</strong>
+        por parte de la estudiante <strong>"Corrales P. Karla Paola"</strong>.
+    </p>
+</header>
+
+<!-- ═══════════ MENÚ ═══════════ -->
+<nav class="menu-grid">
+    <div class="option-card active" onclick="showSection('proyecto-recibo', this)">
+        <h3> Proyecto Recibo</h3>
+    </div>
+    <div class="option-card" onclick="showSection('tarea2', this)"><h3> Tarea 2</h3></div>
+    <div class="option-card" onclick="showSection('tarea3', this)"><h3> Tarea 3</h3></div>
+    <div class="option-card" onclick="showSection('tarea4', this)"><h3> Tarea 4</h3></div>
+</nav>
+
+<!-- ═══════════ SECCIÓN: PROYECTO RECIBO ═══════════ -->
+<section id="proyecto-recibo" class="content-section visible">
+    <div class="recibo-header">
+        <div>
+            <h2>Proyecto Recibo: Escáner y Análisis</h2>
+            <p>Sube tu recibo CFE en PDF o imagen. Extrae datos, analiza consumo y compara varios recibos.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-launcher btn-green" onclick="kAbrirSimple()">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Leer un Recibo
+            </button>
+            <button class="btn-launcher btn-blue-l" onclick="kAbrirMultiple()">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+                Comparar Varios
+            </button>
+        </div>
+    </div>
+
+    <!-- Info cards decorativas -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <div class="k-card k-card-green">
+            <div class="k-label green">Función 1</div>
+            <div style="font-size:.85rem;font-weight:700;color:var(--green);margin-top:4px;">Lector Individual</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.6;">
+                Extrae titular, consumo, total, historial y clasificación de tarifa de un solo recibo PDF o imagen.
+            </div>
+        </div>
+        <div class="k-card k-card-blue">
+            <div class="k-label blue">Función 2</div>
+            <div style="font-size:.85rem;font-weight:700;color:var(--blue);margin-top:4px;">Comparador Múltiple</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.6;">
+                Carga hasta 20 recibos y compara consumo, costos y clasificación en gráficas y tabla exportable.
+            </div>
+        </div>
+        <div class="k-card">
+            <div class="k-label">Tecnología</div>
+            <div style="font-size:.85rem;font-weight:700;color:var(--text);margin-top:4px;">PDF.js + Tesseract OCR</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.6;">
+                Extrae texto digital de PDFs directamente. Si el PDF es escaneado, aplica OCR automático.
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════ SECCIONES PLACEHOLDER ═══════════ -->
+<section id="tarea2" class="content-section">
+    <div class="placeholder-card"><div class="ph-icon">📊</div><p>Tarea 2 — Próximamente</p></div>
+</section>
+<section id="tarea3" class="content-section">
+    <div class="placeholder-card"><div class="ph-icon">📈</div><p>Tarea 3 — Próximamente</p></div>
+</section>
+<section id="tarea4" class="content-section">
+    <div class="placeholder-card"><div class="ph-icon">📝</div><p>Tarea 4 — Próximamente</p></div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MODAL 1: LECTOR SIMPLE
+═══════════════════════════════════════════════════════════════════ -->
+<div id="kModalSimple" class="k-overlay">
+<div class="k-modal">
+
+    <div class="k-modal-head">
+        <div>
+            <h3>⚡ Análisis de Recibo CFE</h3>
+            <p>Sube PDF o imagen — extracción con OCR automático</p>
+        </div>
+        <button class="k-close" onclick="kCerrarSimple()">✕</button>
+    </div>
+
+    <!-- PASO SUBIDA -->
+    <div id="kp-subida">
+        <div class="k-dropzone" id="kZona"
+             onclick="document.getElementById('kInput').click()"
+             ondragover="kDragOver(event)" ondragleave="kDragLeave(event)" ondrop="kDrop(event)">
+            <input type="file" id="kInput" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple onchange="kSeleccion(event)">
+            <div id="kZonaVacia">
+                <div class="dz-icon">📄</div>
+                <div class="dz-title">Arrastra tu recibo aquí</div>
+                <div class="dz-sub">o haz clic · PDF · JPG · PNG · WebP · hasta 50 MB</div>
+            </div>
+            <div id="kZonaLlena" class="hidden">
+                <div class="dz-icon">✅</div>
+                <div id="kChips" style="margin-top:8px;"></div>
+                <div class="dz-sub" style="margin-top:8px;">Clic para agregar más</div>
+            </div>
+        </div>
+        <div id="kError" class="k-error hidden"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+            <button id="kBtnAnalizar" class="k-btn k-btn-green" style="flex:1;" onclick="kIniciar()" disabled>
+                ⚡ Analizar Ahora
+            </button>
+            <button class="k-btn k-btn-ghost" onclick="kDemo()">Demo</button>
+        </div>
+    </div>
+
+    <!-- PASO CARGANDO -->
+    <div id="kp-cargando" class="hidden" style="text-align:center;padding:40px 0;">
+        <div class="k-spinner" style="margin-bottom:16px;"></div>
+        <p id="kMsgCarga" style="color:var(--text);font-weight:700;font-size:.85rem;margin-bottom:12px;">Procesando...</p>
+        <div class="k-bar-bg" style="max-width:280px;margin:0 auto;">
+            <div class="k-bar-fill" id="kBarra" style="width:0%;"></div>
+        </div>
+        <p id="kPct" style="color:var(--muted);font-size:.7rem;margin-top:8px;">0%</p>
+    </div>
+
+    <!-- PASO RESULTADO -->
+    <div id="kp-resultado" class="hidden">
+        <div class="k-tabs">
+            <button class="k-tab active" onclick="kTab('resumen',this)">Resumen</button>
+            <button class="k-tab" onclick="kTab('historial',this)">Historial</button>
+            <button class="k-tab" onclick="kTab('grafica',this)">Gráfica</button>
+            <button class="k-tab" onclick="kTab('crudo',this)">Texto crudo</button>
+        </div>
+
+        <!-- RESUMEN -->
+        <div id="kt-resumen">
+            <div class="k-grid3">
+                <!-- Identificación -->
+                <div class="k-card">
+                    <div class="k-label">Identificación</div>
+                    <div style="margin-top:8px;">
+                        <div style="font-size:.6rem;color:var(--muted);">Titular</div>
+                        <div id="kr-titular" style="font-size:.75rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:6px;">-</div>
+                        <div style="font-size:.6rem;color:var(--muted);">No. Servicio</div>
+                        <div id="kr-servicio" style="font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:6px;">-</div>
+                        <div style="font-size:.6rem;color:var(--muted);">Límite de Pago</div>
+                        <div id="kr-limite" style="font-size:.72rem;font-weight:700;color:var(--red-neon);">-</div>
+                    </div>
+                </div>
+                <!-- Consumo -->
+                <div class="k-card k-card-green" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+                    <div class="k-label green">Consumo Total</div>
+                    <div id="kr-kwh" class="k-val green" style="font-size:2.2rem;margin:6px 0;">-</div>
+                    <div style="font-size:.7rem;color:var(--green);font-weight:700;">kWh</div>
+                    <div style="font-size:.6rem;color:var(--muted);margin-top:8px;">Periodo</div>
+                    <div id="kr-periodo" style="font-size:.62rem;font-weight:700;color:var(--text);line-height:1.4;margin-top:2px;">-</div>
+                </div>
+                <!-- Total -->
+                <div class="k-card">
+                    <div class="k-label">Total a Pagar</div>
+                    <div id="kr-total" style="font-size:1.6rem;font-weight:900;color:var(--green);margin:6px 0;">-</div>
+                    <div class="k-row"><span>Energía</span><span id="kr-energia">-</span></div>
+                    <div class="k-row"><span>IVA 16%</span><span id="kr-iva">-</span></div>
+                    <div class="k-row" style="font-weight:800;"><span>Fac. Periodo</span><span id="kr-facperiodo">-</span></div>
+                    <div class="k-row"><span>DAP</span><span id="kr-dap">-</span></div>
+                    <div class="k-row"><span>Adeudo Ant.</span><span id="kr-adeudo">-</span></div>
+                    <div class="k-row"><span>Su Pago</span><span id="kr-pago">-</span></div>
+                    <div style="margin-top:8px;"><span class="k-badge k-badge-green">✓ Analizado</span></div>
+                </div>
+            </div>
+            <!-- Ingeniería -->
+            <div class="k-card" style="margin-top:10px;">
+                <div class="k-label" style="margin-bottom:10px;">Análisis de Ingeniería</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="k-bl-green">
+                        <div class="k-label green">Media Diaria</div>
+                        <div id="kr-media" style="font-size:.95rem;font-weight:900;color:var(--text);margin-top:2px;">-</div>
+                    </div>
+                    <div class="k-bl-blue">
+                        <div class="k-label blue">Clasificación</div>
+                        <div id="kr-clasificacion" style="font-size:.95rem;font-weight:900;color:var(--text);margin-top:2px;">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORIAL -->
+        <div id="kt-historial" class="hidden">
+            <div class="k-card">
+                <div class="k-label" style="margin-bottom:10px;">Historial de Consumo</div>
+                <div id="kr-historial"><p style="font-size:.72rem;color:var(--muted);font-style:italic;">No se encontró historial en el documento.</p></div>
+            </div>
+        </div>
+
+        <!-- GRÁFICA -->
+        <div id="kt-grafica" class="hidden">
+            <div class="k-card">
+                <div class="k-label" style="margin-bottom:4px;">Consumo histórico (kWh)</div>
+                <div class="k-chart-wrap"><canvas id="kChartHist"></canvas></div>
+            </div>
+        </div>
+
+        <!-- CRUDO -->
+        <div id="kt-crudo" class="hidden">
+            <div class="k-label" style="margin-bottom:6px;">Texto extraído por OCR</div>
+            <div class="k-raw" id="kr-crudo">Sin datos</div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="k-btn k-btn-ghost" style="flex:1;" onclick="kReiniciar()">← Analizar otro</button>
+            <button class="k-btn k-btn-blue" style="flex:1;" onclick="kAbrirComp()">
+                📊 Comparar consumo
+            </button>
+        </div>
+    </div>
+
+    <!-- PASO ERROR -->
+    <div id="kp-error" class="hidden" style="text-align:center;padding:32px 0;">
+        <div style="font-size:2.5rem;margin-bottom:10px;">⚠️</div>
+        <p style="color:var(--red-neon);font-weight:700;font-size:.9rem;">Error al analizar</p>
+        <p id="kMsgError" style="color:var(--muted);font-size:.72rem;margin-top:6px;max-width:300px;margin-inline:auto;"></p>
+        <button class="k-btn k-btn-ghost" style="margin-top:16px;" onclick="kReiniciar()">Intentar de nuevo</button>
+    </div>
+
+</div>
+</div>
+
+<!-- MODAL COMPARATIVA SIMPLE -->
+<div id="kModalComp" class="k-overlay">
+<div class="k-modal">
+    <div class="k-modal-head">
+        <div><h3>📊 Comparativa de Consumo</h3><p>Compara manualmente varios recibos por nombre y kWh</p></div>
+        <button class="k-close" onclick="kCerrarComp()">✕</button>
+    </div>
+    <div id="kcomp-input">
+        <div id="kcomp-filas" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+        <div style="display:flex;gap:10px;">
+            <button class="k-btn k-btn-ghost" style="flex:1;" onclick="kAgregarFila()">+ Agregar persona</button>
+            <button class="k-btn k-btn-green" onclick="kProcesarComp()">Comparar</button>
+        </div>
+    </div>
+    <div id="kcomp-resultado" class="hidden">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+            <div class="k-card k-card-red"><div class="k-label red">Mayor consumo</div><div id="kcomp-max-n" class="k-val red" style="font-size:1rem;margin-top:4px;">-</div><div id="kcomp-max-k" style="color:var(--muted);font-size:.75rem;">0 kWh</div></div>
+            <div class="k-card"><div class="k-label">Promedio grupal</div><div id="kcomp-avg" class="k-val" style="font-size:1rem;margin-top:4px;">-</div></div>
+        </div>
+        <div class="k-chart-wrap"><canvas id="kChartComp"></canvas></div>
+        <button class="k-btn k-btn-ghost" style="margin-top:12px;width:100%;" onclick="document.getElementById('kcomp-input').classList.remove('hidden');document.getElementById('kcomp-resultado').classList.add('hidden');">Modificar</button>
+    </div>
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MODAL 2: LECTOR MÚLTIPLE
+═══════════════════════════════════════════════════════════════════ -->
+<div id="kModalMulti" class="k-overlay">
+<div class="k-modal k-modal-wide">
+
+    <div class="k-modal-head">
+        <div>
+            <h3 style="color:var(--blue);">🔀 Comparador Múltiple de Recibos</h3>
+            <p>Carga de 2 a 20 recibos CFE y compara su consumo, costo y clasificación</p>
+        </div>
+        <button class="k-close" onclick="kCerrarMultiple()">✕</button>
+    </div>
+
+    <!-- PASO SUBIDA -->
+    <div id="km-subida">
+        <div class="k-dropzone multi-zone" id="kmZona"
+             onclick="document.getElementById('kmInput').click()"
+             ondragover="kmDragOver(event)" ondragleave="kmDragLeave(event)" ondrop="kmDrop(event)">
+            <input type="file" id="kmInput" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple onchange="kmSeleccion(event)">
+            <div id="kmZonaVacia">
+                <div class="dz-icon">📂</div>
+                <div class="dz-title" style="color:var(--blue);">Arrastra todos tus recibos aquí</div>
+                <div class="dz-sub">Mínimo 2, máximo 20 · PDF · JPG · PNG · WebP</div>
+            </div>
+            <div id="kmZonaLlena" class="hidden">
+                <div class="dz-icon">✅</div>
+                <div style="font-weight:700;color:var(--blue);"><span id="kmContador">0</span> recibos listos</div>
+                <div class="dz-sub" style="margin-top:4px;">Clic para agregar más</div>
+            </div>
+        </div>
+        <div id="kmError" class="k-error hidden"></div>
+        <div id="kmCola" style="margin-top:10px;max-height:200px;overflow-y:auto;"></div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+            <button id="kmBtnProcesar" class="k-btn k-btn-blue" style="flex:1;" onclick="kmProcesar()" disabled>
+                ⚡ Analizar y Comparar
+            </button>
+            <button class="k-btn k-btn-ghost" onclick="kmDemo()">Demo (5)</button>
+        </div>
+        <p style="text-align:center;font-size:.65rem;color:var(--muted);margin-top:8px;">Necesitas al menos 2 recibos para comparar</p>
+    </div>
+
+    <!-- PASO PROCESANDO -->
+    <div id="km-procesando" class="hidden" style="text-align:center;padding:40px 0;">
+        <div class="k-spinner blue" style="margin-bottom:16px;"></div>
+        <p id="kmMsgCarga" style="color:var(--text);font-weight:700;font-size:.85rem;margin-bottom:12px;">Analizando recibos...</p>
+        <div class="k-bar-bg" style="max-width:280px;margin:0 auto;">
+            <div class="k-bar-fill" id="kmBarra" style="width:0%;"></div>
+        </div>
+        <p id="kmPct" style="color:var(--muted);font-size:.7rem;margin-top:8px;">0%</p>
+    </div>
+
+    <!-- PASO RESULTADO -->
+    <div id="km-resultado" class="hidden">
+
+        <!-- Stats -->
+        <div class="k-stats">
+            <div class="k-card" style="text-align:center;">
+                <div class="k-label">Recibos</div>
+                <div id="kmr-total" class="k-val" style="font-size:1.6rem;margin-top:4px;">-</div>
+            </div>
+            <div class="k-card" style="text-align:center;">
+                <div class="k-label">Prom. consumo</div>
+                <div id="kmr-prom" class="k-val blue" style="font-size:1.1rem;margin-top:4px;">-</div>
+            </div>
+            <div class="k-card k-card-green" style="text-align:center;">
+                <div class="k-label green">Menor consumo</div>
+                <div id="kmr-min-n" style="font-size:.72rem;font-weight:800;color:var(--green);margin-top:4px;line-height:1.2;">-</div>
+                <div id="kmr-min-k" style="font-size:.9rem;font-weight:900;color:var(--green);">-</div>
+            </div>
+            <div class="k-card k-card-red" style="text-align:center;">
+                <div class="k-label red">Mayor consumo</div>
+                <div id="kmr-max-n" style="font-size:.72rem;font-weight:800;color:var(--red-neon);margin-top:4px;line-height:1.2;">-</div>
+                <div id="kmr-max-k" style="font-size:.9rem;font-weight:900;color:var(--red-neon);">-</div>
+            </div>
+        </div>
+
+        <!-- Aviso si kWh no detectado -->
+        <div id="kmr-aviso" class="hidden" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.72rem;color:#f59e0b;">
+            ⚠️ <strong>Algunos recibos tienen kWh = 0</strong> — el OCR no logró leer el consumo. 
+            Ve al tab <strong>Tabla</strong> para ver el texto crudo extraído y revisar qué datos se obtuvieron.
+            Los valores en 0 aparecerán en gris en las gráficas.
+        </div>
+
+        <!-- Tabs -->
+        <div class="k-tabs">
+            <button class="k-tab blue-tab active" onclick="kmTab('kwh',this)">Consumo kWh</button>
+            <button class="k-tab blue-tab" onclick="kmTab('costo',this)">Costo $</button>
+            <button class="k-tab blue-tab" onclick="kmTab('radar',this)">Radar</button>
+            <button class="k-tab blue-tab" onclick="kmTab('tabla',this)">Tabla</button>
+        </div>
+
+        <div id="kmt-kwh" class="hidden">
+            <div class="k-card"><div class="k-chart-wrap"><canvas id="kmGrafKwh"></canvas></div></div>
+        </div>
+        <div id="kmt-costo" class="hidden">
+            <div class="k-card"><div class="k-chart-wrap"><canvas id="kmGrafCosto"></canvas></div></div>
+        </div>
+        <div id="kmt-radar" class="hidden">
+            <div class="k-card">
+                <p style="font-size:.62rem;color:var(--muted);text-align:center;margin-bottom:4px;">Comparativa normalizada (0-100) — solo disponible con ≤8 recibos</p>
+                <div class="k-chart-wrap"><canvas id="kmGrafRadar"></canvas></div>
+            </div>
+        </div>
+        <div id="kmt-tabla" class="hidden">
+            <div style="overflow-x:auto;">
+                <table class="k-table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Titular</th>
+                            <th style="text-align:center;">kWh</th>
+                            <th style="text-align:center;">Total</th>
+                            <th style="text-align:center;">Media/día</th>
+                            <th style="text-align:center;">Tarifa</th>
+                            <th>Periodo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kmr-tabla"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="k-btn k-btn-ghost" style="flex:1;" onclick="kmReiniciar()">← Nueva comparativa</button>
+            <button class="k-btn k-btn-blue" onclick="kmExportarCSV()">
+                ⬇ Exportar CSV
+            </button>
+        </div>
+    </div>
+
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════════
+   NAVEGACIÓN DE SECCIONES
+═══════════════════════════════════════════ */
+function showSection(id, card) {
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('.option-card').forEach(c => c.classList.remove('active'));
+    document.getElementById(id).classList.add('visible');
+    if (card) card.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════
+   PDF.js worker
+═══════════════════════════════════════════ */
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ═══════════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════════ */
+const KLector = {
+    archivos: [], kwhActual: null,
+    grafHist: null, grafComp: null, contFila: 0
+};
+const KMulti = {
+    cola: [], resultados: [],
+    grafKwh: null, grafCosto: null, grafRadar: null
+};
+const COLORES_M = [
+    '#00ffad','#02d1ff','#f59e0b','#ff4d6d','#a855f7',
+    '#10b981','#ec4899','#14b8a6','#f97316','#06b6d4',
+    '#84cc16','#8b5cf6','#e11d48','#0ea5e9','#22c55e',
+    '#d97706','#7c3aed','#db2777','#0284c7','#16a34a'
+];
+
+/* ═══════════════════════════════════════════
+   UTILIDADES COMPARTIDAS
+═══════════════════════════════════════════ */
+function _esPDF(f)    { return f.name.toLowerCase().endsWith('.pdf'); }
+function _esImg(f)    { return /\.(jpe?g|png|webp)$/i.test(f.name) || f.type.startsWith('image/'); }
+function _set(id, v)  { const e = document.getElementById(id); if (e) e.textContent = v; }
+
+function _textoBasura(t) {
+    if (!t || t.trim().length < 15) return true;
+    const raros = (t.match(/[^\w\s\xE1\xE9\xED\xF3\xFA\xF1\$\,\.\:]/g) || []).length;
+    return (raros / t.length) > 0.3;
+}
+const PALABRAS_CFE = ['ENERGIA','Energia','IVA','PAGAR','Pagar','SERVICIO','Servicio','kWh'];
+function _tieneCFE(t) { return PALABRAS_CFE.filter(p => t.includes(p)).length >= 3; }
+
+function _corregirOCR(s) {
+    const m = {O:'0',o:'0',I:'1',l:'1',i:'1',Z:'2',E:'8',e:'8',A:'4',S:'3',G:'6',T:'7',B:'8'};
+    return s.split('').map(c => m[c] || c).join('');
+}
+function _hallarMonto(texto, etiquetas) {
+    for (const et of etiquetas) {
+        const c = et.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        for (const p of [
+            new RegExp(c+'[\\s:]*\\$?\\s*([\\d,]+)[\\s]+([\\d]{2})(?![\\d])','i'),
+            new RegExp(c+'[\\s:]*\\$?\\s*([\\d,]+)\\.([\\d]{2})','i'),
+            new RegExp(c+'[^\\d]*([\\d,]+)[\\s\\.]+([\\d]{2})(?![\\d])','i')
+        ]) {
+            const m = texto.match(p);
+            if (m) { const v=parseFloat(m[1].replace(/,/g,'')+'.'+( m[2]||'00')); if(!isNaN(v)&&v>=0&&v<100000) return v; }
+        }
+    }
+    return 0;
+}
+
+/* ── Leer PDF con fallback OCR ── */
+async function _leerPDF(archivo, onProgreso) {
+    return new Promise((ok, fail) => {
+        const fr = new FileReader();
+        fr.onerror = () => fail(new Error('No se pudo abrir el PDF'));
+        fr.onload = async function () {
+            try {
+                const bytes = new Uint8Array(this.result);
+                if (!String.fromCharCode(...bytes.slice(0,5)).startsWith('%PDF'))
+                    throw new Error('Archivo no válido como PDF');
+                onProgreso('Extrayendo texto...');
+                const doc = await pdfjsLib.getDocument(bytes).promise;
+                let texto = '';
+                for (let p=1; p<=doc.numPages; p++) {
+                    const pag = await doc.getPage(p);
+                    const cnt = await pag.getTextContent();
+                    let pg = ''; cnt.items.forEach(i => { pg += i.str+' '; });
+                    texto += '\n--- PAGINA '+p+' ---\n'+pg;
+                }
+                if (_tieneCFE(texto)) { ok(texto); return; }
+                // Fallback OCR
+                onProgreso('Aplicando OCR...');
+                let texOCR = '';
+                for (let p=1; p<=Math.min(doc.numPages,2); p++) {
+                    const pag = await doc.getPage(p);
+                    const cnt = await pag.getTextContent();
+                    let pg = ''; cnt.items.forEach(i => { pg += i.str+' '; });
+                    try {
+                        const sc = p===2?3.0:2.0;
+                        const vp = pag.getViewport({scale:sc});
+                        const cv = document.createElement('canvas');
+                        cv.width=vp.width; cv.height=vp.height;
+                        await pag.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+                        const r = await Tesseract.recognize(cv.toDataURL(),'spa',{
+                            logger: m => { if(m.status==='recognizing text') onProgreso('OCR pág '+p+': '+Math.round(m.progress*100)+'%'); }
+                        });
+                        pg += '\n'+r.data.text;
+                    } catch(_){}
+                    texOCR += '\n--- PAGINA '+p+' ---\n'+pg;
+                }
+                for (let p=3; p<=doc.numPages; p++) {
+                    const pag = await doc.getPage(p);
+                    const cnt = await pag.getTextContent();
+                    let pg=''; cnt.items.forEach(i=>{pg+=i.str+' ';}); texOCR+='\n--- PAGINA '+p+' ---\n'+pg;
+                }
+                ok(texOCR);
+            } catch(e){ fail(new Error(e.message)); }
+        };
+        fr.readAsArrayBuffer(archivo);
+    });
+}
+async function _leerImagen(archivo, onProgreso) {
+    const r = await Tesseract.recognize(archivo,'spa',{
+        logger: m => { if(m.status==='recognizing text') onProgreso('OCR imagen: '+Math.round(m.progress*100)+'%'); }
+    });
+    if (!r.data.text||r.data.text.trim().length<5) throw new Error('No se detectó texto en la imagen');
+    return r.data.text;
+}
+
+/* ── Extracción de datos del recibo ── */
+function _extraer(texto, nombreArchivo) {
+    const p2    = texto.indexOf('--- PAGINA 2 ---');
+    const texP1 = p2>0 ? texto.substring(0,p2) : texto.substring(0,3000);
+    let montoTotal=0;
+    for (const pat of [/TOTAL\s+A\s*PAGAR[\s:]*\$?\s*(\d+)\s+(\d{2})/i,/\$\s*(\d+)\.(\d{2})/,/\$\s*(\d{2,4})(?!\d)/]) {
+        const m=texP1.match(pat); if(m){montoTotal=parseFloat((m[1]||'0').replace(/,/g,'')+'.'+( m[2]||'00')); if(montoTotal>0)break;}
+    }
+    let energia=_hallarMonto(texto,['Energia','ENERGIA','Suministro']);
+    let iva=_hallarMonto(texto,['IVA 16%','IVA 16','IVA']);
+    const dap=_hallarMonto(texto,['DAP','Alumbrado']);
+    const adeudo=_hallarMonto(texto,['Adeudo Anterior','Saldo Anterior']);
+    const pago=_hallarMonto(texto,['Su Pago','SU PAGO','Pago Anterior']);
+    if(!(energia>0&&iva>0)&&montoTotal>0){const b=Math.max(montoTotal-adeudo+Math.abs(pago)-dap,montoTotal);energia=b/1.16;iva=b-energia;}
+    const mSvc=texto.match(/(?:NO\.?\s*DE?\s*SERVICIO|No\.?\s*Servicio)[\s:]*(\d[\s]?\d{11})/i)||texto.match(/(\d{12})/);
+    const servicio=mSvc?mSvc[1].replace(/\s/g,''):'No detectado';
+    let titular=nombreArchivo.replace(/\.[^.]+$/,'');
+    for(const p of[/TOTAL\s+A\s*PAGAR[^\n]*\n([A-Z\xC1\xC9\xCD\xD3\xDA\xD1\s]{10,50})/i,/([A-Z\xC1\xC9\xCD\xD3\xDA\xD1]{4,}\s+[A-Z\xC1\xC9\xCD\xD3\xDA\xD1]{4,}\s+[A-Z\xC1\xC9\xCD\xD3\xDA\xD1]{4,})/]){
+        const m=texto.match(p); if(m){const n=m[1].trim();if(n.length>5&&!n.includes('CFE')&&!/^\d+$/.test(n)){titular=n;break;}}
+    }
+    let periodo='No detectado';
+    for(const p of[/PERIODO\s+FACTURADO[\s:]*(\d{2})\s+([A-Z]{3})\s+(\d{2})\s*[-]\s*(\d{2})\s+([A-Z]{3})\s*(\d{2})/i,/(\d{2})\s+([A-Z]{3})\s+(\d{2})\s*[-]\s*(\d{2})\s+([A-Z]{3})\s*(\d{2})/i,/del\s+(\d{2})\s+([A-Z]{3})\s+(\d{2})\s+al\s+(\d{2})\s+([A-Z]{3})\s*(\d{2})/i]){
+        const m=texP1.match(p);if(m){periodo='del '+m[1]+' '+m[2]+' '+m[3]+' al '+m[4]+' '+m[5]+' '+m[6];break;}
+    }
+    let kwh=0;
+    const _texBusq = texP1 + texto;
+    for(const p of[
+        /Total\s+periodo[\s:]*([a-zA-Z]?\d{2,4})/i,
+        /CONSUMO\s+TOTAL[\s:]*([a-zA-Z]?\d{2,4})\s*kWh/i,
+        /CONSUMO[\s:]+([a-zA-Z]?\d{2,4})\s*kWh/i,
+        /(\d{2,4})\s*kWh/i,
+        /kWh[\s:]+([\d]{2,4})/i,
+        /Consumo\s+bimestral[\s:]*([\d]{2,4})/i,
+        /Consumo\s+del\s+periodo[\s:]*([\d]{2,4})/i
+    ]){
+        const m=_texBusq.match(p);if(m){const v=parseInt(m[1].replace(/[a-zA-Z]/g,""));if(v>0&&v<10000){kwh=v;break;}}
+    }
+    if(!kwh){ const lects=_texBusq.match(/(\d{4,6})\s+(\d{4,6})/g)||[]; for(const l of lects){const ns=l.trim().split(/\s+/);const a=parseInt(ns[0]),b=parseInt(ns[1]);const diff=b-a;if(diff>0&&diff<5000){kwh=diff;break;}} }
+    let limite='No detectado';
+    const mL=texto.match(/L[I\xCD]MITE\s+DE\s+PAGO[\s:]*(\d{2})\s+([A-Z]{3})\s+(\d{2})/i)||texto.match(/LIMITE\s+DE\s+PAGO[\s:]*(\d{2})\s+([A-Z]{3})\s+(\d{2})/i);
+    if(mL){const mm={ENE:'01',FEB:'02',MAR:'03',ABR:'04',MAY:'05',JUN:'06',JUL:'07',AGO:'08',SEP:'09',OCT:'10',NOV:'11',DIC:'12'};limite=mL[1]+'/'+(mm[mL[2].toUpperCase()]||'01')+'/20'+mL[3];}
+    let dias=60;
+    const mF=periodo.match(/del\s+(\d{2})\s+([A-Z]{3})\s+(\d{2})\s+al\s+(\d{2})\s+([A-Z]{3})\s+(\d{2})/i);
+    if(mF){const mm={ENE:0,FEB:1,MAR:2,ABR:3,MAY:4,JUN:5,JUL:6,AGO:7,SEP:8,OCT:9,NOV:10,DIC:11};
+        const d1=new Date(2000+parseInt(mF[3]),mm[mF[2].toUpperCase()],parseInt(mF[1]));
+        const d2=new Date(2000+parseInt(mF[6]),mm[mF[5].toUpperCase()],parseInt(mF[4]));
+        const df=Math.ceil(Math.abs(d2-d1)/86400000);if(df>0&&df<100)dias=df;}
+    const media=kwh>0?parseFloat((kwh/dias).toFixed(2)):0;
+    let tarifa='Desconocida';
+    if(kwh>500)tarifa='Alto Consumo (DAC)'; else if(kwh>250)tarifa='Doméstica Alta'; else if(kwh>0)tarifa='Doméstica Básica';
+    // Historial
+    const regHist=/del\s+(\d{2})\s+([A-Z0-9]{3})\s*(\d{2})\s+al\s+(\d{2})\s+([A-Z0-9]{3})\s*(\d{2})\s+([a-zA-Z]+\d*|\d+)\s+[s$](\d+)\.(\d{2})/gi;
+    const historial=[]; const vistos=new Set(); let mh;
+    while((mh=regHist.exec(texto))!==null){
+        const clave=mh[1]+mh[2]+mh[3]; if(vistos.has(clave))continue;
+        const raw=mh[7]; const cor=_corregirOCR(raw); let num=parseInt(cor.replace(/\D/g,''));
+        if(num>0&&num<20){if(num<10)num=parseInt('8'+num);else if(num===14)num=114;else num=parseInt('8'+String(num).slice(1));}
+        if(num>0&&num<1000){vistos.add(clave);historial.push({etiqueta:mh[1]+' '+mh[2]+"'"+mh[3]+'-'+mh[4]+' '+mh[5]+"'"+mh[6],kwh:num,monto:mh[8]+'.'+mh[9]});}
+    }
+    return {
+        titular, servicio, kwh, periodo, limite, media, tarifa, historial,
+        total:    montoTotal>0?montoTotal:parseFloat((energia+iva).toFixed(2)),
+        energia:  parseFloat(energia.toFixed(2)), iva: parseFloat(iva.toFixed(2)),
+        dap:      parseFloat(dap.toFixed(2)), adeudo: parseFloat(adeudo.toFixed(2)),
+        pago:     parseFloat(pago.toFixed(2))
+    };
+}
+
+/* ═══════════════════════════════════════════
+   MODAL SIMPLE — control
+═══════════════════════════════════════════ */
+function kAbrirSimple()  { document.getElementById('kModalSimple').style.display='flex'; }
+function kCerrarSimple() { document.getElementById('kModalSimple').style.display='none'; }
+
+function kDragOver(e)  { e.preventDefault(); document.getElementById('kZona').classList.add('over'); }
+function kDragLeave()  { document.getElementById('kZona').classList.remove('over'); }
+function kDrop(e)      { e.preventDefault(); kDragLeave(); kRegistrar(Array.from(e.dataTransfer.files)); }
+function kSeleccion(e) { kRegistrar(Array.from(e.target.files)); e.target.value=''; }
+
+function kRegistrar(archivos) {
+    const err=[];
+    archivos.forEach(f=>{
+        if(f.size===0) return err.push(f.name+': vacío');
+        if(f.size>50*1024*1024) return err.push(f.name+': supera 50MB');
+        if(!_esPDF(f)&&!_esImg(f)) return err.push(f.name+': formato no compatible');
+        KLector.archivos.push({archivo:f,esPDF:_esPDF(f)});
+    });
+    if(err.length){const el=document.getElementById('kError');el.classList.remove('hidden');el.textContent=err.join(' · ');}
+    kActualizarZona();
+}
+function kQuitarArchivo(i) { KLector.archivos.splice(i,1); kActualizarZona(); }
+function kActualizarZona() {
+    const hay=KLector.archivos.length>0;
+    document.getElementById('kZonaVacia').classList.toggle('hidden',hay);
+    document.getElementById('kZonaLlena').classList.toggle('hidden',!hay);
+    document.getElementById('kBtnAnalizar').disabled=!hay;
+    document.getElementById('kError').classList.add('hidden');
+    document.getElementById('kChips').innerHTML=KLector.archivos.map((a,i)=>
+        '<span class="k-chip">'+(a.esPDF?'📄':'🖼️')+' '+a.archivo.name+
+        ' <button onclick="kQuitarArchivo('+i+')">×</button></span>'
+    ).join('');
+}
+
+function kPasoSimple(paso) {
+    ['subida','cargando','resultado','error'].forEach(p=>
+        document.getElementById('kp-'+p).classList.toggle('hidden',p!==paso));
+}
+function kProgSimple(pct,msg) {
+    if(msg) _set('kMsgCarga',msg);
+    if(pct!==null){document.getElementById('kBarra').style.width=pct+'%';_set('kPct',pct+'%');}
+}
+
+async function kIniciar() {
+    if(!KLector.archivos.length) return;
+    kPasoSimple('cargando'); kProgSimple(0,'Preparando...');
+    let textoTotal='';
+    try {
+        for(let i=0;i<KLector.archivos.length;i++){
+            const {archivo,esPDF:esP}=KLector.archivos[i];
+            kProgSimple(Math.round((i/KLector.archivos.length)*65),'Procesando '+(i+1)+'/'+KLector.archivos.length+': '+archivo.name);
+            textoTotal += (esP ? await _leerPDF(archivo,m=>kProgSimple(null,m)) : await _leerImagen(archivo,m=>kProgSimple(null,m)))+'\n';
+        }
+        if(textoTotal.trim().length<15) throw new Error('No se pudo extraer texto. Verifica que el archivo sea legible.');
+        kProgSimple(88,'Identificando datos...');
+        document.getElementById('kr-crudo').textContent=textoTotal;
+        kMostrarSimple(_extraer(textoTotal,'recibo'));
+        kProgSimple(100,'¡Listo!');
+        kPasoSimple('resultado');
+    } catch(e) { _set('kMsgError',e.message); kPasoSimple('error'); }
+}
+
+function kMostrarSimple(d) {
+    _set('kr-titular',d.titular); _set('kr-servicio',d.servicio); _set('kr-limite',d.limite);
+    _set('kr-kwh',d.kwh||'-'); _set('kr-periodo',d.periodo);
+    _set('kr-total','$'+d.total.toFixed(2));
+    _set('kr-energia',d.energia.toFixed(2)); _set('kr-iva',d.iva.toFixed(2));
+    _set('kr-facperiodo',(d.energia+d.iva).toFixed(2));
+    _set('kr-dap',d.dap.toFixed(2)); _set('kr-adeudo',d.adeudo.toFixed(2));
+    _set('kr-pago','-'+Math.abs(d.pago).toFixed(2));
+    _set('kr-media',d.media+' kWh/día'); _set('kr-clasificacion',d.tarifa);
+    // Historial
+    document.getElementById('kr-historial').innerHTML = d.historial.length
+        ? d.historial.map(r=>'<div class="k-hist-row"><span class="periodo">'+r.etiqueta+'</span><span class="kwh">'+r.kwh+' kWh</span><span class="monto">$'+r.monto+'</span></div>').join('')
+        : '<p style="font-size:.72rem;color:var(--muted);font-style:italic;">No se encontró historial.</p>';
+    // Gráfica
+    if(d.historial.length){
+        const ctx=document.getElementById('kChartHist');
+        if(KLector.grafHist) KLector.grafHist.destroy();
+        KLector.grafHist=new Chart(ctx,{type:'bar',data:{
+            labels:d.historial.map(r=>r.etiqueta.split('-')[0].trim()),
+            datasets:[{label:'kWh',data:d.historial.map(r=>r.kwh),backgroundColor:'#00ffad',borderRadius:8,barThickness:28}]
+        },options:kChartOpts('kWh')});
+    }
+    KLector.kwhActual=d.kwh||null;
+}
+
+function kReiniciar() {
+    KLector.archivos=[]; kActualizarZona(); kPasoSimple('subida');
+    if(KLector.grafHist){KLector.grafHist.destroy();KLector.grafHist=null;}
+}
+function kTab(tab,btn) {
+    ['resumen','historial','grafica','crudo'].forEach(t=>document.getElementById('kt-'+t).classList.toggle('hidden',t!==tab));
+    document.querySelectorAll('#kp-resultado .k-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function kDemo() {
+    _set('kr-titular','VALDEZ MORA JULIA'); _set('kr-servicio','202100300330');
+    _set('kr-limite','23/01/2026'); _set('kr-kwh','150'); _set('kr-periodo','del 07 NOV 25 al 08 ENE 26');
+    _set('kr-total','$272.00'); _set('kr-energia','233.87'); _set('kr-iva','37.42');
+    _set('kr-facperiodo','271.29'); _set('kr-dap','0.00'); _set('kr-adeudo','270.71'); _set('kr-pago','-270.00');
+    _set('kr-media','2.42 kWh/día'); _set('kr-clasificacion','Doméstica Básica');
+    const demo=[{e:"NOV'24-ENE'25",k:277,m:'420.00'},{e:"SEP'24-NOV'24",k:274,m:'412.00'},{e:"JUL'24-SEP'24",k:235,m:'352.00'},{e:"MAY'24-JUL'24",k:228,m:'340.00'},{e:"MAR'24-MAY'24",k:226,m:'335.00'},{e:"ENE'24-MAR'24",k:140,m:'212.00'}];
+    document.getElementById('kr-historial').innerHTML=demo.map(r=>'<div class="k-hist-row"><span class="periodo">'+r.e+'</span><span class="kwh">'+r.k+' kWh</span><span class="monto">$'+r.m+'</span></div>').join('');
+    document.getElementById('kr-crudo').textContent='Datos demo — recibo VALDEZ MORA JULIA';
+    const ctx=document.getElementById('kChartHist');
+    if(KLector.grafHist) KLector.grafHist.destroy();
+    KLector.grafHist=new Chart(ctx,{type:'bar',data:{labels:demo.map(r=>r.e),datasets:[{label:'kWh',data:demo.map(r=>r.k),backgroundColor:'#00ffad',borderRadius:8,barThickness:28}]},options:kChartOpts('kWh')});
+    KLector.kwhActual=150;
+    kPasoSimple('resultado');
+}
+
+/* ═══════════════════════════════════════════
+   MODAL COMPARATIVA SIMPLE
+═══════════════════════════════════════════ */
+function kAbrirComp() {
+    kCerrarSimple();
+    document.getElementById('kModalComp').style.display='flex';
+    if(KLector.contFila===0){ kAgregarFila('Yo',KLector.kwhActual||150); kAgregarFila('Promedio CFE',217); }
+}
+function kCerrarComp() { document.getElementById('kModalComp').style.display='none'; }
+
+function kAgregarFila(nombre='',kwh='') {
+    KLector.contFila++;
+    const id=KLector.contFila;
+    const c=document.getElementById('kcomp-filas');
+    const d=document.createElement('div');
+    d.id='kfila-'+id;
+    d.style.cssText='display:flex;align-items:center;gap:8px;background:var(--card2);padding:8px 10px;border-radius:8px;border:1px solid var(--border);';
+    d.innerHTML='<input type="text" placeholder="Nombre" value="'+nombre+'" data-tipo="nom" style="flex:1;background:transparent;border:none;color:var(--text);font-size:.8rem;font-weight:700;outline:none;">'+
+        '<input type="number" placeholder="kWh" value="'+kwh+'" data-tipo="kwh" style="width:70px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--green);font-weight:900;font-size:.8rem;outline:none;text-align:center;">'+
+        '<button onclick="document.getElementById(\'kfila-'+id+'\').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;">✕</button>';
+    c.appendChild(d);
+}
+
+function kProcesarComp() {
+    const noms=Array.from(document.querySelectorAll('#kcomp-filas [data-tipo="nom"]')).map(i=>i.value||'?');
+    const vals=Array.from(document.querySelectorAll('#kcomp-filas [data-tipo="kwh"]')).map(i=>parseFloat(i.value)||0);
+    if(!noms.length) return;
+    const prom=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const max=Math.max(...vals); const imax=vals.indexOf(max);
+    _set('kcomp-max-n',noms[imax]); _set('kcomp-max-k',max+' kWh'); _set('kcomp-avg',prom.toFixed(1)+' kWh');
+    document.getElementById('kcomp-input').classList.add('hidden');
+    document.getElementById('kcomp-resultado').classList.remove('hidden');
+    const ctx=document.getElementById('kChartComp');
+    if(KLector.grafComp) KLector.grafComp.destroy();
+    KLector.grafComp=new Chart(ctx,{type:'bar',data:{
+        labels:noms,
+        datasets:[
+            {label:'Consumo kWh',data:vals,backgroundColor:vals.map((v,i)=>v===max?'#ff4d6d':COLORES_M[i%COLORES_M.length]),borderRadius:10},
+            {label:'Promedio',data:Array(noms.length).fill(prom),type:'line',borderColor:'#848e9c',borderDash:[5,5],borderWidth:2,pointRadius:0,fill:false}
+        ]
+    },options:kChartOpts('kWh')});
+}
+
+/* ═══════════════════════════════════════════
+   MODAL MÚLTIPLE — control
+═══════════════════════════════════════════ */
+function kAbrirMultiple()  { document.getElementById('kModalMulti').style.display='flex'; }
+function kCerrarMultiple() { document.getElementById('kModalMulti').style.display='none'; }
+
+function kmDragOver(e) { e.preventDefault(); document.getElementById('kmZona').classList.add('over'); }
+function kmDragLeave()  { document.getElementById('kmZona').classList.remove('over'); }
+function kmDrop(e) { e.preventDefault(); kmDragLeave(); kmRegistrar(Array.from(e.dataTransfer.files)); }
+function kmSeleccion(e) { kmRegistrar(Array.from(e.target.files)); e.target.value=''; }
+
+function kmRegistrar(archivos) {
+    const err=[];
+    archivos.forEach(f=>{
+        if(KMulti.cola.length>=20) return err.push('Máximo 20 recibos');
+        if(f.size===0) return err.push(f.name+': vacío');
+        if(f.size>50*1024*1024) return err.push(f.name+': supera 50MB');
+        if(!_esPDF(f)&&!_esImg(f)) return err.push(f.name+': formato no compatible');
+        if(KMulti.cola.find(r=>r.nombre===f.name)) return err.push(f.name+': ya está en la lista');
+        KMulti.cola.push({archivo:f,esPDF:_esPDF(f),nombre:f.name,estado:'pendiente'});
+    });
+    if(err.length){const el=document.getElementById('kmError');el.classList.remove('hidden');el.textContent=err.join(' · ');setTimeout(()=>el.classList.add('hidden'),4000);}
+    kmRenderCola();
+}
+function kmQuitarDeCola(i){ KMulti.cola.splice(i,1); kmRenderCola(); }
+function kmRenderCola() {
+    const hay=KMulti.cola.length>0;
+    document.getElementById('kmZonaVacia').classList.toggle('hidden',hay);
+    document.getElementById('kmZonaLlena').classList.toggle('hidden',!hay);
+    document.getElementById('kmBtnProcesar').disabled=KMulti.cola.length<2;
+    _set('kmContador',KMulti.cola.length);
+    document.getElementById('kmCola').innerHTML=KMulti.cola.map((item,i)=>{
+        const col=COLORES_M[i%COLORES_M.length];
+        const est={pendiente:'<span class="m-estado m-est-p">Pendiente</span>',procesando:'<span class="m-estado m-est-r">⏳ Leyendo</span>',listo:'<span class="m-estado m-est-ok">✓ Listo</span>',error:'<span class="m-estado m-est-e">✗ Error</span>'}[item.estado]||'';
+        return '<div class="m-fila" style="border-left-color:'+col+'">'+
+            '<div class="m-num" style="background:'+col+'">'+(i+1)+'</div>'+
+            '<div style="flex:1;min-width:0;"><p style="font-size:.72rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(item.esPDF?'📄':'🖼️')+' '+item.nombre+'</p></div>'+
+            est+
+            (item.estado==='pendiente'?'<button onclick="kmQuitarDeCola('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:4px;">✕</button>':'')+
+            '</div>';
+    }).join('');
+}
+
+function kmPasoMulti(paso) {
+    ['subida','procesando','resultado'].forEach(p=>
+        document.getElementById('km-'+p).classList.toggle('hidden',p!==paso));
+}
+function kmProg(pct,msg) {
+    if(msg) _set('kmMsgCarga',msg);
+    if(pct!==null){document.getElementById('kmBarra').style.width=pct+'%';_set('kmPct',pct+'%');}
+}
+
+async function kmProcesar() {
+    if(KMulti.cola.length<2) return;
+    KMulti.resultados=[];
+    kmPasoMulti('procesando');
+    const total=KMulti.cola.length;
+    for(let i=0;i<total;i++){
+        const item=KMulti.cola[i]; item.estado='procesando'; kmRenderCola();
+        kmProg(Math.round((i/total)*90),'Analizando '+(i+1)+'/'+total+': '+item.nombre);
+        try {
+            const texto = item.esPDF
+                ? await _leerPDF(item.archivo, m=>kmProg(null,'Recibo '+(i+1)+'/'+total+' — '+m))
+                : await _leerImagen(item.archivo, m=>kmProg(null,'Recibo '+(i+1)+'/'+total+' — '+m));
+            const d=_extraer(texto,item.nombre);
+            d.color=COLORES_M[i%COLORES_M.length]; d.numero=i+1;
+            d.textoOCR = texto.substring(0, 500); // primeros 500 chars para diagnóstico
+            KMulti.resultados.push(d); item.estado='listo';
+        } catch(e) {
+            item.estado='error';
+            KMulti.resultados.push({nombre:item.nombre,archivo:item.nombre,color:COLORES_M[i%COLORES_M.length],numero:i+1,kwh:0,total:0,energia:0,iva:0,dap:0,adeudo:0,pago:0,media:0,tarifa:'Desconocida',periodo:'-',limite:'-',historial:[],error:e.message});
+        }
+        kmRenderCola();
+    }
+    kmProg(100,'¡Comparativa lista!');
+    setTimeout(kmMostrarResultados, 50);
+}
+
+function kmMostrarResultados() {
+    const res = KMulti.resultados;
+    if (!res.length) return;
+
+    // ── Estadísticas globales ─────────────────────────────────
+    const validos = res.filter(r => r.kwh > 0);
+    const kwhV   = validos.length ? validos.map(r => r.kwh) : [0];
+    const maxK   = Math.max(...kwhV), minK = Math.min(...kwhV);
+    const promK  = kwhV.reduce((a,b)=>a+b,0) / kwhV.length;
+    const ganador = validos.length ? res.find(r => r.kwh === minK) : null;
+    const peor    = validos.length ? res.find(r => r.kwh === maxK) : null;
+    const _ms = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+    _ms('kmr-total', res.length);
+    _ms('kmr-prom',  validos.length ? promK.toFixed(1)+' kWh' : '—');
+    _ms('kmr-min-n', ganador ? ganador.nombre : '-');
+    _ms('kmr-min-k', validos.length ? minK+' kWh' : '—');
+    _ms('kmr-max-n', peor ? peor.nombre : '-');
+    _ms('kmr-max-k', validos.length ? maxK+' kWh' : '—');
+
+    // ── Tabla ────────────────────────────────────────────────
+    document.getElementById('kmr-tabla').innerHTML = res.map(r => {
+        const tb = r.tarifa.includes('DAC') ? 'tb-dac'
+                 : r.tarifa.includes('Alta') ? 'tb-alta'
+                 : r.tarifa.includes('sica') ? 'tb-basica' : 'tb-desc';
+        return '<tr><td><span class="m-num-sm" style="background:'+r.color+'">'+(r.numero)+'</span></td>'+
+            '<td><span style="font-size:.72rem;font-weight:700;color:var(--text);">'+r.nombre+'</span></td>'+
+            '<td style="text-align:center;"><span style="color:var(--green);font-weight:900;">'+(r.kwh||'—')+'</span></td>'+
+            '<td style="text-align:center;"><span style="color:#00ffad;font-weight:700;">$'+(r.total>0?r.total.toFixed(2):'—')+'</span></td>'+
+            '<td style="text-align:center;font-size:.65rem;color:var(--muted);">'+(r.media>0?r.media+' kWh/d':'—')+'</td>'+
+            '<td style="text-align:center;"><span class="'+tb+'">'+r.tarifa+'</span></td>'+
+            '<td style="font-size:.62rem;color:var(--muted);">'+r.periodo+'</td></tr>';
+    }).join('');
+
+    // Mostrar aviso si hay recibos sin kWh
+    const sinKwh = res.filter(r => !r.kwh || r.kwh === 0);
+    const avisoEl = document.getElementById('kmr-aviso');
+    if (avisoEl) avisoEl.classList.toggle('hidden', sinKwh.length === 0);
+
+    // Mostrar panel primero para que los canvas tengan dimensiones reales
+    kmPasoMulti('resultado');
+
+    // Construir gráficas y activar tab después de que el browser pinte el panel
+    setTimeout(() => {
+        try {
+            kmConstruirTodasLasGraficas(res);
+        } catch(e) {
+            console.error('Error construyendo gráficas:', e);
+        }
+        const btn = document.querySelector('#km-resultado .k-tab.blue-tab');
+        if (btn) kmTab('kwh', btn);
+    }, 50);
+}
+
+function kmConstruirTodasLasGraficas(res) {
+    const noms  = res.map(r => r.nombre.split(' ')[0]);
+    const cols  = res.map(r => r.color);
+    const kwhD  = res.map(r => r.kwh);
+    const costD = res.map(r => r.total);
+    const maxKD = Math.max(...kwhD) || 1;
+    const maxCD = Math.max(...costD) || 1;
+    const norm  = arr => { const mx=Math.max(...arr)||1; return arr.map(v=>parseFloat(((v/mx)*100).toFixed(1))); };
+
+    if (KMulti.grafKwh)   { KMulti.grafKwh.destroy();   KMulti.grafKwh   = null; }
+    if (KMulti.grafCosto) { KMulti.grafCosto.destroy();  KMulti.grafCosto = null; }
+    if (KMulti.grafRadar) { KMulti.grafRadar.destroy();  KMulti.grafRadar = null; }
+
+    KMulti.grafKwh = new Chart(document.getElementById('kmGrafKwh'), {
+        type: 'bar',
+        data: { labels: noms, datasets: [{ label:'kWh', data:kwhD,
+            backgroundColor: kwhD.map((v,i) => v===maxKD && v>0 ? '#ff4d6d' : cols[i]),
+            borderRadius:10, borderSkipped:false }] },
+        options: kChartOpts('kWh','Consumo por recibo')
+    });
+
+    KMulti.grafCosto = new Chart(document.getElementById('kmGrafCosto'), {
+        type: 'bar',
+        data: { labels: noms, datasets: [{ label:'$', data:costD,
+            backgroundColor: costD.map((v,i) => v===maxCD && v>0 ? '#ff4d6d' : cols[i]),
+            borderRadius:10, borderSkipped:false }] },
+        options: kChartOpts('$','Costo por recibo')
+    });
+
+    if (res.length <= 8) {
+        KMulti.grafRadar = new Chart(document.getElementById('kmGrafRadar'), {
+            type: 'radar',
+            data: {
+                labels: ['Consumo kWh','Costo Total','Media Diaria'],
+                datasets: res.map((r,i) => ({
+                    label: r.nombre.split(' ')[0],
+                    data:  [norm(kwhD)[i], norm(costD)[i], norm(res.map(x=>x.media))[i]],
+                    backgroundColor: cols[i]+'33', borderColor: cols[i],
+                    borderWidth:2, pointBackgroundColor: cols[i]
+                }))
+            },
+            options: {
+                responsive:true, maintainAspectRatio:false,
+                plugins:{
+                    legend:{display:true,position:'bottom',labels:{color:'#848e9c',font:{size:10,weight:'bold'},usePointStyle:true}},
+                    tooltip:{backgroundColor:'#1e2329',callbacks:{label:c=>c.dataset.label+': '+c.raw.toFixed(0)+'/100'}}
+                },
+                scales:{r:{beginAtZero:true,max:100,
+                    ticks:{stepSize:25,font:{size:9},color:'#848e9c'},
+                    grid:{color:'#2b3139'},
+                    pointLabels:{font:{size:10,weight:'bold'},color:'#eaecef'}
+                }}
+            }
+        });
+    }
+}
+
+
+
+function kmTab(tab,btn) {
+    ['kwh','costo','radar','tabla'].forEach(t=>document.getElementById('kmt-'+t).classList.toggle('hidden',t!==tab));
+    document.querySelectorAll('#km-resultado .k-tab').forEach(b=>b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    // Las gráficas ya fueron construidas en kmConstruirTodasLasGraficas;
+    // solo pedimos resize para que se adapten al tamaño visible
+    if (tab==='kwh'   && KMulti.grafKwh)   KMulti.grafKwh.resize();
+    if (tab==='costo' && KMulti.grafCosto) KMulti.grafCosto.resize();
+    if (tab==='radar' && KMulti.grafRadar) KMulti.grafRadar.resize();
+}
+function kmReiniciar() {
+    KMulti.cola=[]; KMulti.resultados=[];
+    if(KMulti.grafKwh){KMulti.grafKwh.destroy();KMulti.grafKwh=null;}
+    if(KMulti.grafCosto){KMulti.grafCosto.destroy();KMulti.grafCosto=null;}
+    if(KMulti.grafRadar){KMulti.grafRadar.destroy();KMulti.grafRadar=null;}
+    kmRenderCola(); kmPasoMulti('subida');
+}
+function kmDemo() {
+    KMulti.resultados=[
+        {numero:1,color:'#00ffad',nombre:'VALDEZ MORA JULIA',  archivo:'recibo_01.pdf',kwh:150,total:272.00,energia:233.87,iva:37.42,dap:0,adeudo:270.71,pago:270,  media:2.42,tarifa:'Doméstica Básica',periodo:'NOV 25 - ENE 26',limite:'23/01/2026',historial:[]},
+        {numero:2,color:'#02d1ff',nombre:'GARCIA LOPEZ MARIO', archivo:'recibo_02.pdf',kwh:325,total:580.00,energia:500.00,iva:80.00,dap:0,adeudo:0,      pago:0,     media:5.25,tarifa:'Doméstica Alta', periodo:'NOV 25 - ENE 26',limite:'23/01/2026',historial:[]},
+        {numero:3,color:'#f59e0b',nombre:'MARTINEZ RUIZ ANA',  archivo:'recibo_03.pdf',kwh:89, total:142.00,energia:122.41,iva:19.59,dap:0,adeudo:0,      pago:0,     media:1.44,tarifa:'Doméstica Básica',periodo:'NOV 25 - ENE 26',limite:'23/01/2026',historial:[]},
+        {numero:4,color:'#ff4d6d',nombre:'TORRES REYES PEDRO', archivo:'recibo_04.pdf',kwh:612,total:1250.00,energia:1077.59,iva:172.41,dap:0,adeudo:0,   pago:0,     media:9.87,tarifa:'Alto Consumo (DAC)',periodo:'NOV 25 - ENE 26',limite:'23/01/2026',historial:[]},
+        {numero:5,color:'#a855f7',nombre:'SANCHEZ DIAZ LUISA', archivo:'recibo_05.pdf',kwh:210,total:380.00,energia:327.59,iva:52.41, dap:0,adeudo:180.00,pago:180,   media:3.39,tarifa:'Doméstica Básica',periodo:'NOV 25 - ENE 26',limite:'23/01/2026',historial:[]}
+    ];
+    kmMostrarResultados();
+}
+function kmExportarCSV() {
+    if(!KMulti.resultados.length) return;
+    const cab=['#','Titular','Archivo','kWh','Total ($)','Energía','IVA','DAP','Adeudo','Pago','Media Diaria','Tarifa','Periodo','Límite Pago'];
+    const filas=KMulti.resultados.map(r=>[r.numero,r.nombre,r.archivo,r.kwh,r.total.toFixed(2),r.energia.toFixed(2),r.iva.toFixed(2),r.dap.toFixed(2),r.adeudo.toFixed(2),r.pago.toFixed(2),r.media,r.tarifa,r.periodo,r.limite].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
+    const csv=[cab.join(','),...filas].join('\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='comparativa_cfe.csv';a.click();URL.revokeObjectURL(url);
+}
+
+/* ═══════════════════════════════════════════
+   OPCIONES DE GRÁFICA (tema dark neón)
+═══════════════════════════════════════════ */
+function kChartOpts(unidad, titulo) {
+    return {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+            legend:{display:false},
+            title:titulo?{display:true,text:titulo,color:'#eaecef',font:{size:11,weight:'bold'},padding:{bottom:8}}:{display:false},
+            tooltip:{backgroundColor:'#1e2329',borderColor:'#2b3139',borderWidth:1,titleColor:'#eaecef',bodyColor:'#00ffad',padding:10,
+                callbacks:{label:c=>unidad==='$'?'$'+c.raw.toFixed(2):c.raw+' '+unidad}}
+        },
+        scales:{
+            y:{beginAtZero:true,grid:{color:'#2b3139'},ticks:{color:'#848e9c',font:{size:10},callback:v=>unidad==='$'?'$'+v:v+' '+unidad}},
+            x:{grid:{display:false},ticks:{color:'#848e9c',font:{size:10,weight:'bold'},maxRotation:30}}
+        }
+    };
+}
+</script>
+</body>
+</html>
